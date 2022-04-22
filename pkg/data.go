@@ -15,57 +15,57 @@ func (p *PinTuan) getDistPidArr() []model.Product {
 	return pArr
 }
 
-func (p *PinTuan) addPd(pd *model.Pd) {
+func (p *PinTuan) addWait(w *model.Wait) {
 	round := 1
 	var lastZj model.Zj
-	err := p.db.Where("dest_product_id = ?", pd.DestProductId).Find(&lastZj).Error
+	err := p.db.Where("dest_product_id = ?", w.DestProductId).Find(&lastZj).Error
 	if err == nil {
 		round = lastZj.Round
 	}
 	if err != nil && err != gorm.ErrRecordNotFound {
 		log.Println(err)
 	}
-	pd.Round = round + 1
-	var lastPd model.Pd
-	err = p.db.Where("dest_product_id = ? AND round = ?", pd.DestProductId, pd.Round).Find(&lastPd).Error
+	w.Round = round + 1
+	var lastPd model.Wait
+	err = p.db.Where("dest_product_id = ? AND round = ?", w.DestProductId, w.Round).Find(&lastPd).Error
 	if err == gorm.ErrRecordNotFound || lastPd.Id == 0 {
-		pd.Round = round
-		pd.Index = 1
+		w.Round = round
+		w.Index = 1
 	}else{
-		pd.Index = lastPd.Index + 1
+		w.Index = lastPd.Index + 1
 	}
 
-	if err := p.db.Create(pd).Error; err != nil {
+	if err := p.db.Create(w).Error; err != nil {
 		log.Println(err)
 	}
 }
 
-func (p *PinTuan) startWait(DestProductId int) {
-	var wArr []model.Wait
-	err := p.db.Where("status = ? AND dest_product_id = ?", model.WaitStatusNormal, DestProductId).Find(&wArr).Error
-	if err == gorm.ErrRecordNotFound || len(wArr) == 0 {
+func (p *PinTuan) startNew(DestProductId int) {
+	var nArr []model.New
+	err := p.db.Where("status = ? AND dest_product_id = ?", model.NewStatusNormal, DestProductId).Find(&nArr).Error
+	if err == gorm.ErrRecordNotFound || len(nArr) == 0 {
 		return
 	}
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	for _, w := range wArr {
-		pd := &model.Pd{
-			Status: model.PdStatusNew,
-			DestProductId: w.DestProductId,
-			OrderId: w.OrderId,
+	for _, n := range nArr {
+		w := &model.Wait{
+			Status: model.WaitStatusNew,
+			DestProductId: n.DestProductId,
+			OrderId: n.OrderId,
 		}
-		p.addPd(pd)
-		if err := p.db.Model(&model.Wait{}).Where("id = ?", w.Id).Update("status", model.WaitStatusFinish).Error; err != nil {
+		p.addWait(w)
+		if err := p.db.Model(&model.Wait{}).Where("id = ?", w.Id).Update("status", model.NewStatusFinish).Error; err != nil {
 			log.Println(err)
 		}
 	}
 }
 
 func (p *PinTuan) startMiss(DestProductId int) {
-	var msArr []model.Pd
-	err := p.db.Where("status = ? AND dest_product_id = ?", model.PdStatusMiss, DestProductId).Order("id asc").Find(&msArr).Error
+	var msArr []model.Wait
+	err := p.db.Where("status = ? AND dest_product_id = ?", model.WaitStatusMiss, DestProductId).Order("id asc").Find(&msArr).Error
 	if err == gorm.ErrRecordNotFound || len(msArr) == 0 {
 		return
 	}
@@ -74,13 +74,13 @@ func (p *PinTuan) startMiss(DestProductId int) {
 		return
 	}
 	for _, w := range msArr {
-		pd := &model.Pd{
-			Status: model.PdStatusMissIn,
+		pd := &model.Wait{
+			Status: model.WaitStatusMissIn,
 			DestProductId: w.DestProductId,
 			OrderId: w.OrderId,
 		}
-		p.addPd(pd)
-		if err := p.db.Model(&model.Pd{}).Where("id = ?", w.Id).Update("status", model.PdStatusMissFinish).Error; err != nil {
+		p.addWait(pd)
+		if err := p.db.Model(&model.Wait{}).Where("id = ?", w.Id).Update("status", model.WaitStatusMissFinish).Error; err != nil {
 			log.Println(err)
 		}
 	}
@@ -93,12 +93,12 @@ func (p *PinTuan) startLost(DestProductId int) {
 		p.changeNextC<- struct{}{}
 		return
 	}
-	pd := &model.Pd{
-		Status: model.PdStatusMissIn,
+	w := &model.Wait{
+		Status: model.WaitStatusMissIn,
 		DestProductId: l.DestProductId,
 		OrderId: l.OrderId,
 	}
-	p.addPd(pd)
+	p.addWait(w)
 	if err := p.db.Model(&model.Zj{}).Where("id = ?", l.Id).Update("status", model.ZjStatusLostFinish).Error; err != nil {
 		log.Println(err)
 	}
@@ -116,7 +116,7 @@ func (p *PinTuan) zj(DestProductId int) {
 	}
 	round = round + 1
 
-	var pdArr []model.Pd
+	var pdArr []model.Wait
 	err = p.db.Where(
 		"dest_product_id = ? AND round = ?",
 		DestProductId,
@@ -145,7 +145,7 @@ func (p *PinTuan) zj(DestProductId int) {
 	}
 	for ; j < len(pdArr); j++ {
 		pd := pdArr[j]
-		err := p.db.Model(&model.Pd{}).Where("id = ?", pd.Id).Update("status", model.PdStatusMiss).Error
+		err := p.db.Model(&model.Wait{}).Where("id = ?", pd.Id).Update("status", model.WaitStatusMiss).Error
 		if err != nil {
 			log.Println(err)
 		}
@@ -165,7 +165,7 @@ func (p *PinTuan) kj(DestProductId, win int) {
 	}
 	round = round + 1
 
-	var pdArr []model.Pd
+	var pdArr []model.Wait
 	err = p.db.Where(
 		"dest_product_id = ? AND round = ?",
 		DestProductId,
@@ -197,7 +197,7 @@ func (p *PinTuan) kj(DestProductId, win int) {
 	}
 	for ; j < len(pdArr); j++ {
 		pd := pdArr[j]
-		err := p.db.Model(&model.Pd{}).Where("id = ?", pd.Id).Update("status", model.PdStatusMiss).Error
+		err := p.db.Model(&model.Wait{}).Where("id = ?", pd.Id).Update("status", model.WaitStatusMiss).Error
 		if err != nil {
 			log.Println(err)
 		}

@@ -12,14 +12,14 @@ func (p *Product) TableName() string {
 	return "yd_product"
 }
 
-type WaitStatus int
+type NewStatus int
 
 const (
-	WaitStatusNormal WaitStatus = iota
-	WaitStatusFinish
+	NewStatusNormal NewStatus = iota
+	NewStatusFinish
 )
 
-type Wait struct {
+type New struct {
 	Id int `gorm:"id"`
 	Status int `gorm:"status"`
 	OrderId int `gorm:"order_id"`
@@ -28,35 +28,34 @@ type Wait struct {
 	UpdatedAt time.Time `gorm:"updated_at"`
 }
 
-func (w *Wait) TableName() string {
+func (w *New) TableName() string {
 	return "xinxi2_pin_tuan"
 }
 
-type PdStatus int
+type WaitStatus int
 
 const (
-	PdStatusNew PdStatus = iota + 1
-	PdStatusLost
-	PdStatusMiss
-	PdStatusMissIn
-	PdStatusMissFinish
+	WaitStatusNew WaitStatus = iota + 1
+	WaitStatusLost
+	WaitStatusMiss
+	WaitStatusMissIn
+	WaitStatusMissFinish
 )
 
-
-type Pd struct {
+type Wait struct {
 	Id int `gorm:"id"`
 	Index int `gorm:"index"`
 	Round int `gorm:"round"`
 	Group int `gorm:"group"`
 	Position int `gorm:"position"`
-	Status PdStatus `gorm:"status"`
+	Status WaitStatus `gorm:"status"`
 	OrderId int `gorm:"order_id"`
 	DestProductId int `gorm:"dest_product_id"`
 	CreatedAt time.Time `gorm:"created_at"`
 	UpdatedAt time.Time `gorm:"updated_at"`
 }
 
-func (p *Pd) TableName() string {
+func (p *Wait) TableName() string {
 	return "xinxi2_pin_tuan_history"
 }
 

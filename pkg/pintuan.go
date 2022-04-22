@@ -64,7 +64,7 @@ func (p *PinTuan) Start() {
 	p.getDistPidArr()
 	pArr := p.getDistPidArr()
 	for _, d := range pArr {
-		p.startWait(d.Id)
+		p.startNew(d.Id)
 		p.startMiss(d.Id)
 		p.startLost(d.Id)
 	}
