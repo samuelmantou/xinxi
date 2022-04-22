@@ -3,7 +3,7 @@ package pkg
 import (
 	"gorm.io/gorm"
 	"log"
-	"paidan/pkg/model"
+	"xinxi/pkg/model"
 )
 
 func (p *PinTuan) getDistPidArr() []model.Product {

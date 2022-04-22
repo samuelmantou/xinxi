@@ -4,8 +4,8 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"log"
-	"paidan/pkg"
 	"runtime"
+	"xinxi/pkg"
 )
 
 func main() {
