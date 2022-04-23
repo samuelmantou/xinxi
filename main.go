@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"os"
+	"time"
 	"xinxi/pkg"
 )
 
@@ -15,6 +16,9 @@ type Config struct {
 }
 
 func main() {
+	n := time.Now()
+	nDay := n.Format("2006-01-02 15:04")
+	log.Println("运行时间:" + nDay)
 	b, err := os.ReadFile("./conf.yaml")
 	if err != nil {
 		log.Println(err)
