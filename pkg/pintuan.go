@@ -12,7 +12,7 @@ type Cfg struct {
 	Change int `json:"change"`
 	Round int `json:"round"`
 	Winner int `json:"winner"`
-	Old int `json:"old"`
+	Insert int `json:"insert"`
 	Start string `json:"start"`
 	End string `json:"end"`
 }

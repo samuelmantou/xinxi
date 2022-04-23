@@ -29,7 +29,7 @@ func main() {
 		Change: 5,
 		Round: 30,
 		Winner: 5,
-		Old: 2,
+		Insert: 2,
 		Start: "07:00",
 		End: "20:00",
 	}

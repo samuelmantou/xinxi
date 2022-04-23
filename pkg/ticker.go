@@ -13,7 +13,7 @@ func (p *PinTuan) pdTicker() {
 
 func (p *PinTuan) insertTicker()  {
 	for {
-		time.Sleep(time.Second * time.Duration(p.cfg.Old))
+		time.Sleep(time.Second * time.Duration(p.cfg.Insert))
 		if p.InTimeRange() {
 			p.insertC<- struct{}{}
 		}
