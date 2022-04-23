@@ -8,7 +8,7 @@ import (
 
 func (p *PinTuan) getDistPidArr() []model.Product {
 	var pArr []model.Product
-	err := p.db.Where("type = 1").Find(&pArr).Error
+	err := p.db.Debug().Where("type = 1").Find(&pArr).Error
 	if err != nil {
 		log.Println(err)
 	}
@@ -16,14 +16,14 @@ func (p *PinTuan) getDistPidArr() []model.Product {
 }
 
 func (p *PinTuan) insertPool(po *model.Pool) {
-	if err := p.db.Create(po).Error; err != nil {
+	if err := p.db.Debug().Create(po).Error; err != nil {
 		log.Println(err)
 	}
 }
 
 func (p *PinTuan) insertNew(DestProductId int) {
 	var nArr []model.New
-	err := p.db.Where("status = ? AND dest_product_id = ?", model.NewStatusNormal, DestProductId).Find(&nArr).Error
+	err := p.db.Debug().Where("status = ? AND dest_product_id = ?", model.NewStatusNormal, DestProductId).Find(&nArr).Error
 	if err == gorm.ErrRecordNotFound || len(nArr) == 0 {
 		return
 	}
@@ -38,7 +38,7 @@ func (p *PinTuan) insertNew(DestProductId int) {
 			OrderId: n.OrderId,
 		}
 		p.insertPool(po)
-		if err := p.db.Model(&model.New{}).Where("id = ?", n.Id).Update("status", model.NewStatusFinish).Error; err != nil {
+		if err := p.db.Debug().Model(&model.New{}).Where("id = ?", n.Id).Update("status", model.NewStatusFinish).Error; err != nil {
 			log.Println(err)
 		}
 	}
@@ -46,8 +46,10 @@ func (p *PinTuan) insertNew(DestProductId int) {
 
 func (p *PinTuan) insertLost(DestProductId int) {
 	var w model.Win
-	err := p.db.Where("status = ? AND position = ? AND dest_product_id = ?", model.WinStatusLost, p.lastPosition, DestProductId).Find(&w).Error
-	if err == gorm.ErrRecordNotFound {
+	err := p.db.Debug().Where("status = ? AND position = ? AND dest_product_id = ?", model.WinStatusLost, p.lastPosition, DestProductId).
+		Order("id asc").
+		Find(&w).Error
+	if err == gorm.ErrRecordNotFound || w.Id == 0{
 		return
 	}
 	po := &model.Pool{
@@ -56,107 +58,62 @@ func (p *PinTuan) insertLost(DestProductId int) {
 		OrderId: w.OrderId,
 	}
 	p.insertPool(po)
-	if err := p.db.Model(&model.Win{}).Where("id = ?", w.Id).Update("status", model.WinStatusLostFinish).Error; err != nil {
+	if err := p.db.Debug().Model(&model.Win{}).Where("id = ?", w.Id).Update("status", model.WinStatusLostFinish).Error; err != nil {
 		log.Println(err)
 	}
 }
 
-//func (p *PinTuan) zj(DestProductId int) {
-//	round := 1
-//	var lastZj model.Zj
-//	err := p.db.Where("dest_product_id = ?", DestProductId).Find(&lastZj).Error
-//	if err == nil {
-//		round = lastZj.Round
-//	}
-//	if err != nil && err != gorm.ErrRecordNotFound {
-//		log.Println(err)
-//	}
-//	round = round + 1
-//
-//	var pdArr []model.Wait
-//	err = p.db.Where(
-//		"dest_product_id = ? AND round = ?",
-//		DestProductId,
-//		round,
-//	).Order("id asc").Find(&pdArr).Error
-//	if err == gorm.ErrRecordNotFound || len(pdArr) == 0 {
-//		return
-//	}
-//
-//	j := 0
-//	for i := 0; i < len(pdArr) / 4; i++ {
-//		for j = i * 4; j < i * 4 + 4; j++ {
-//			pd := pdArr[j]
-//			z := &model.Zj{
-//				Round: pd.Round,
-//				Group: pd.Group,
-//				Position: pd.Position,
-//				OrderId: pd.OrderId,
-//				DestProductId: DestProductId,
-//				Index: pd.Index,
-//				Status: model.ZjStatusWait,
-//			}
-//
-//			p.db.Create(&z)
-//		}
-//	}
-//	for ; j < len(pdArr); j++ {
-//		pd := pdArr[j]
-//		err := p.db.Model(&model.Wait{}).Where("id = ?", pd.Id).Update("status", model.WaitStatusMiss).Error
-//		if err != nil {
-//			log.Println(err)
-//		}
-//	}
-//}
-//
-//
-//func (p *PinTuan) kj(DestProductId, win int) {
-//	round := 1
-//	var lastZj model.Zj
-//	err := p.db.Where("dest_product_id = ?", DestProductId).Find(&lastZj).Error
-//	if err == nil {
-//		round = lastZj.Round
-//	}
-//	if err != nil && err != gorm.ErrRecordNotFound {
-//		log.Println(err)
-//	}
-//	round = round + 1
-//
-//	var pdArr []model.Wait
-//	err = p.db.Where(
-//		"dest_product_id = ? AND round = ?",
-//		DestProductId,
-//		round,
-//	).Order("id asc").Find(&pdArr).Error
-//	if err == gorm.ErrRecordNotFound || len(pdArr) == 0 {
-//		return
-//	}
-//
-//	j := 0
-//	for i := 0; i < len(pdArr) / 4; i++ {
-//		for j = i * 4; j < i * 4 + 4; j++ {
-//			pd := pdArr[j]
-//			z := &model.Zj{
-//				Round: pd.Round,
-//				Group: pd.Group,
-//				Position: pd.Position,
-//				OrderId: pd.OrderId,
-//				DestProductId: DestProductId,
-//				Index: pd.Index,
-//			}
-//			if j == win {
-//				z.Status = model.ZjStatusWin
-//			}else{
-//				z.Status = model.ZjStatusLost
-//			}
-//			p.db.Create(&z)
-//		}
-//	}
-//	for ; j < len(pdArr); j++ {
-//		pd := pdArr[j]
-//		err := p.db.Model(&model.Wait{}).Where("id = ?", pd.Id).Update("status", model.WaitStatusMiss).Error
-//		if err != nil {
-//			log.Println(err)
-//		}
-//	}
-//}
+func (p *PinTuan) open(DestProductId, win int) {
+	round := 0
+	var lastWin model.Win
+	err := p.db.Debug().Where("dest_product_id = ?", DestProductId).Find(&lastWin).Error
+	if lastWin.Id > 0 {
+		round = lastWin.Round
+	}
+	round++
+
+	var poolArr []model.Pool
+	err = p.db.Debug().Where(
+		"dest_product_id = ? AND status = ?",
+		DestProductId,
+		model.PoolNormal,
+	).Order("id asc").Find(&poolArr).Error
+	if err == gorm.ErrRecordNotFound || len(poolArr) == 0 {
+		return
+	}
+
+	j := 0
+	idx := 1
+	for i := 0; i < len(poolArr) / 4; i++ {
+		k := 1
+		for j = i * 4; j < i * 4 + 4; j++ {
+			po := poolArr[j]
+			z := &model.Win{
+				Round: round,
+				Group: i + 1,
+				Position: k,
+				OrderId: po.OrderId,
+				DestProductId: DestProductId,
+				Index: idx,
+			}
+
+			if k == win {
+				z.Status = model.WinStatusWin
+			}else{
+				z.Status = model.WinStatusLost
+			}
+
+			p.db.Debug().Create(&z)
+			idx++
+			k++
+		}
+	}
+	
+	for ; j < len(poolArr); j++ {
+		po := poolArr[j]
+		err := p.db.Debug().Model(&model.Win{}).Where("id = ?", po.Id).Update("status", model.WinStatusMiss).Error
+		if err != nil {
+			log.Println(err)
+		}
+	}
+}

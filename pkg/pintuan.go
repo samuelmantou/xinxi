@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"log"
+	"math/rand"
 	"time"
 )
 
@@ -61,23 +62,15 @@ func (p *PinTuan) Insert() {
 }
 
 func (p *PinTuan) Open() {
-	//pArr := p.getDistPidArr()
-	//for _, d := range pArr {
-	//	p.zj(d.Id)
-	//}
+	rand.Seed(time.Now().UnixNano())
+	min := 0
+	max := 3
+	win := rand.Intn(max - min + 1) + min
+	pArr := p.getDistPidArr()
+	for _, d := range pArr {
+		p.open(d.Id, win)
+	}
 }
-
-//func (p *PinTuan) Kj()  {
-//	rand.Seed(time.Now().UnixNano())
-//	min := 0
-//	max := 3
-//	win := rand.Intn(max - min + 1) + min
-//
-//	pArr := p.getDistPidArr()
-//	for _, d := range pArr {
-//		p.kj(d.Id, win)
-//	}
-//}
 
 func (p *PinTuan) TimeTicker() {
 	go p.pdTicker()
