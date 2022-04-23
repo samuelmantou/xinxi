@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -18,6 +19,7 @@ type Cfg struct {
 }
 
 type PinTuan struct {
+	db *gorm.DB
 	cfg *Cfg
 	Gap time.Duration
 	LastStatus int
@@ -25,7 +27,8 @@ type PinTuan struct {
 	runC chan struct{}
 	insertC chan struct{}
 	changeNextC chan struct{}
-	db *gorm.DB
+	insertLock sync.Mutex
+	openLock sync.Mutex
 }
 
 func (p *PinTuan) InTimeRange() bool {
@@ -54,6 +57,8 @@ func (p *PinTuan) getPosition(i int) int {
 }
 
 func (p *PinTuan) Insert() {
+	p.insertLock.Lock()
+	defer p.insertLock.Unlock()
 	pArr := p.getDistPidArr()
 	for _, i := range pArr {
 		p.insertNew(i.Id)
@@ -62,6 +67,8 @@ func (p *PinTuan) Insert() {
 }
 
 func (p *PinTuan) Open() {
+	p.openLock.Lock()
+	defer p.openLock.Unlock()
 	rand.Seed(time.Now().UnixNano())
 	min := 0
 	max := 3

@@ -36,6 +36,7 @@ func (p *PinTuan) insertNew(DestProductId int) {
 			Status: model.PoolNormal,
 			DestProductId: n.DestProductId,
 			OrderId: n.OrderId,
+			Uid: n.Uid,
 		}
 		p.insertPool(po)
 		if err := p.db.Debug().Model(&model.New{}).Where("id = ?", n.Id).Update("status", model.NewStatusFinish).Error; err != nil {
@@ -56,6 +57,7 @@ func (p *PinTuan) insertLost(DestProductId int) {
 		Status: model.PoolNormal,
 		DestProductId: w.DestProductId,
 		OrderId: w.OrderId,
+		Uid: w.Uid,
 	}
 	p.insertPool(po)
 	if err := p.db.Debug().Model(&model.Win{}).Where("id = ?", w.Id).Update("status", model.WinStatusLostFinish).Error; err != nil {
@@ -66,7 +68,7 @@ func (p *PinTuan) insertLost(DestProductId int) {
 func (p *PinTuan) open(DestProductId, win int) {
 	round := 0
 	var lastWin model.Win
-	err := p.db.Debug().Where("dest_product_id = ?", DestProductId).Find(&lastWin).Error
+	err := p.db.Debug().Where("dest_product_id = ?", DestProductId).Order("round desc").Find(&lastWin).Error
 	if lastWin.Id > 0 {
 		round = lastWin.Round
 	}
@@ -81,7 +83,9 @@ func (p *PinTuan) open(DestProductId, win int) {
 	if err == gorm.ErrRecordNotFound || len(poolArr) == 0 {
 		return
 	}
-
+	if len(poolArr) < 4 {
+		return
+	}
 	j := 0
 	idx := 1
 	for i := 0; i < len(poolArr) / 4; i++ {
@@ -95,6 +99,7 @@ func (p *PinTuan) open(DestProductId, win int) {
 				OrderId: po.OrderId,
 				DestProductId: DestProductId,
 				Index: idx,
+				Uid: po.Uid,
 			}
 
 			if k == win {
@@ -118,7 +123,9 @@ func (p *PinTuan) open(DestProductId, win int) {
 			OrderId: po.OrderId,
 			DestProductId: DestProductId,
 			Status: model.WinStatusMiss,
+			Uid: po.Uid,
 		}
+		idx++
 		err := p.db.Debug().Create(&w)
 		if err != nil {
 			log.Println(err)
