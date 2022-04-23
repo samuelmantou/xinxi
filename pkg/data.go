@@ -11,14 +11,14 @@ func (p *PinTuan) getDistPidArr() []model.Product {
 	var pArr []model.Product
 	err := p.db.Where("type = 1").Find(&pArr).Error
 	if err != nil {
-		log.Println(err)
+		log.Println("getDistPidArr" + err.Error())
 	}
 	return pArr
 }
 
 func (p *PinTuan) insertPool(po *model.Pool) {
 	if err := p.db.Create(po).Error; err != nil {
-		log.Println(err)
+		log.Println("insertPool" + err.Error())
 	}
 }
 
@@ -32,7 +32,7 @@ func (p *PinTuan) insertNew(DestProductId int) {
 		return
 	}
 	if err != nil {
-		log.Println(err)
+		log.Println("insertNew" + err.Error())
 		return
 	}
 	for _, n := range nArr {
@@ -47,7 +47,7 @@ func (p *PinTuan) insertNew(DestProductId int) {
 		if err := p.db.Model(&model.New{}).
 			Where("id = ?", n.Id).
 			Update("status", model.NewStatusFinish).Error; err != nil {
-			log.Println(err)
+			log.Println("insertNew2" + err.Error())
 		}
 	}
 }
@@ -73,7 +73,7 @@ func (p *PinTuan) insertLost(DestProductId int) {
 	if err := p.db.Model(&model.Win{}).
 		Where("id = ?", w.Id).
 		Update("status", model.WinStatusLostFinish).Error; err != nil {
-		log.Println(err)
+		log.Println("insertLost" + err.Error())
 	}
 }
 
@@ -157,9 +157,9 @@ func (p *PinTuan) open(destProductId, win int, reward Reward) {
 			Uid: po.Uid,
 		}
 		idx++
-		err := p.db.Create(&w)
+		err := p.db.Create(&w).Error
 		if err != nil {
-			log.Println(err)
+			log.Println("open" + err.Error())
 		}
 	}
 
