@@ -104,6 +104,7 @@ func (p *PinTuan) open(DestProductId, win int) {
 			}
 
 			p.db.Debug().Create(&z)
+			p.db.Debug().Model(&model.Pool{}).Where("id = ?", po.Id).Update("status", model.PoolFinish)
 			idx++
 			k++
 		}
@@ -111,7 +112,14 @@ func (p *PinTuan) open(DestProductId, win int) {
 	
 	for ; j < len(poolArr); j++ {
 		po := poolArr[j]
-		err := p.db.Debug().Model(&model.Win{}).Where("id = ?", po.Id).Update("status", model.WinStatusMiss).Error
+		w := model.Win{
+			Index: idx,
+			Round: round,
+			OrderId: po.OrderId,
+			DestProductId: DestProductId,
+			Status: model.WinStatusMiss,
+		}
+		err := p.db.Debug().Create(&w)
 		if err != nil {
 			log.Println(err)
 		}
