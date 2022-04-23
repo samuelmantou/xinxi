@@ -3,6 +3,7 @@ package pkg
 import (
 	"gorm.io/gorm"
 	"log"
+	"strconv"
 	"xinxi/pkg/model"
 )
 
@@ -65,7 +66,7 @@ func (p *PinTuan) insertLost(DestProductId int) {
 	}
 }
 
-func (p *PinTuan) open(destProductId, win int) {
+func (p *PinTuan) open(destProductId, win int, reward Reward) {
 	round := 0
 	var lastWin model.Win
 	err := p.db.Debug().Where("dest_product_id = ?", destProductId).Order("round desc").Find(&lastWin).Error
@@ -88,6 +89,7 @@ func (p *PinTuan) open(destProductId, win int) {
 	}
 	j := 0
 	idx := 1
+	var winIds []string
 	for i := 0; i < len(poolArr) / 4; i++ {
 		k := 1
 		for j = i * 4; j < i * 4 + 4; j++ {
@@ -109,6 +111,9 @@ func (p *PinTuan) open(destProductId, win int) {
 			}
 
 			p.db.Debug().Create(&w)
+			if w.Id > 0 {
+				winIds = append(winIds, strconv.Itoa(w.Id))
+			}
 			p.db.Debug().Model(&model.Pool{}).
 				Where("id = ?", po.Id).
 				Updates(map[string]interface{}{
@@ -120,6 +125,9 @@ func (p *PinTuan) open(destProductId, win int) {
 			idx++
 			k++
 		}
+	}
+	if len(winIds) > 0 {
+		reward(winIds)
 	}
 	
 	for ; j < len(poolArr); j++ {

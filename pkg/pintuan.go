@@ -5,6 +5,8 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"math/rand"
+	"net/http"
+	"net/url"
 	"sync"
 	"time"
 )
@@ -15,7 +17,10 @@ type Cfg struct {
 	Insert int `yaml:"insert"`
 	Start string `yaml:"start"`
 	End string `yaml:"end"`
+	Url string `yaml:"url"`
 }
+
+type Reward func(winIds []string)
 
 type PinTuan struct {
 	db *gorm.DB
@@ -65,6 +70,18 @@ func (p *PinTuan) Insert() {
 	}
 }
 
+func (p *PinTuan) reward(winIds []string) {
+	go func() {
+		data := url.Values{
+			"ids": winIds,
+		}
+		_, err := http.PostForm(p.cfg.Url, data)
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+}
+
 func (p *PinTuan) Open() {
 	p.openLock.Lock()
 	defer p.openLock.Unlock()
@@ -74,7 +91,7 @@ func (p *PinTuan) Open() {
 	win := rand.Intn(max - min + 1) + min
 	pArr := p.getDistPidArr()
 	for _, d := range pArr {
-		p.open(d.Id, win)
+		p.open(d.Id, win, p.reward)
 	}
 }
 
