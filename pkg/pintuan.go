@@ -20,7 +20,7 @@ type Cfg struct {
 	Url string `yaml:"url"`
 }
 
-type Reward func(winIds []string)
+type Reward func(winIds, refundIds []string)
 
 type PinTuan struct {
 	db *gorm.DB
@@ -70,10 +70,11 @@ func (p *PinTuan) Insert() {
 	}
 }
 
-func (p *PinTuan) reward(winIds []string) {
+func (p *PinTuan) reward(winIds, refundIds []string) {
 	go func() {
 		data := url.Values{
 			"ids": winIds,
+			"refundIds": refundIds,
 		}
 		_, err := http.PostForm(p.cfg.Url, data)
 		if err != nil {

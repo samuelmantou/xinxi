@@ -24,6 +24,7 @@ type New struct {
 	Status int `gorm:"status"`
 	OrderId int `gorm:"order_id"`
 	DestProductId int `gorm:"dest_product_id"`
+	IsRefund bool `gorm:"is_refund"`
 	Uid int `json:"uid"`
 	CreatedAt time.Time `gorm:"created_at"`
 	UpdatedAt time.Time `gorm:"updated_at"`
@@ -47,6 +48,7 @@ type Pool struct {
 	Status PoolStatus `gorm:"status"`
 	OrderId int `gorm:"order_id"`
 	DestProductId int `gorm:"dest_product_id"`
+	IsRefund bool `gorm:"is_refund"`
 	Uid int `json:"uid"`
 	CreatedAt time.Time `gorm:"created_at"`
 	UpdatedAt time.Time `gorm:"updated_at"`
@@ -74,6 +76,7 @@ type Win struct {
 	Status WinStatus `gorm:"status"`
 	OrderId int `gorm:"order_id"`
 	DestProductId int `gorm:"dest_product_id"`
+	IsRefund bool `gorm:"is_refund"`
 	Uid int `json:"uid"`
 	CreatedAt time.Time `gorm:"created_at"`
 	UpdatedAt time.Time `gorm:"updated_at"`
