@@ -26,9 +26,10 @@ func main() {
 	sqlDb.SetMaxOpenConns(30)
 
 	cfg := &pkg.Cfg{
-		Change: 60 * 1,
-		Pd: 5,
-		Zj: 15,
+		Change: 5,
+		Round: 30,
+		Winner: 5,
+		Old: 2,
 		Start: "07:00",
 		End: "20:00",
 	}

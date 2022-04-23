@@ -4,33 +4,25 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"log"
-	"math/rand"
 	"time"
-)
-
-type PTType int
-
-const (
-	PTTypeStart PTType = iota
-	PTTypePaiDan
-	PTTypeZj
-	PTTypeKj
 )
 
 type Cfg struct {
 	Change int `json:"change"`
-	Pd int `json:"pd"`
-	Zj int `json:"zj"`
-	Kj int `json:"kj"`
+	Round int `json:"round"`
+	Winner int `json:"winner"`
+	Old int `json:"old"`
 	Start string `json:"start"`
 	End string `json:"end"`
 }
 
 type PinTuan struct {
 	cfg *Cfg
+	Gap time.Duration
+	LastStatus int
 	lastPosition int
-	pdC chan struct{}
-	zjC chan struct{}
+	runC chan struct{}
+	insertC chan struct{}
 	changeNextC chan struct{}
 	db *gorm.DB
 }
@@ -60,50 +52,46 @@ func (p *PinTuan) getPosition(i int) int {
 	return i
 }
 
-func (p *PinTuan) Start() {
-	p.getDistPidArr()
+func (p *PinTuan) Insert() {
 	pArr := p.getDistPidArr()
-	for _, d := range pArr {
-		p.startNew(d.Id)
-		p.startMiss(d.Id)
-		p.startLost(d.Id)
+	for _, i := range pArr {
+		p.insertNew(i.Id)
+		p.insertLost(i.Id)
 	}
 }
 
-func (p *PinTuan) Zj() {
-	pArr := p.getDistPidArr()
-	for _, d := range pArr {
-		p.zj(d.Id)
-	}
+func (p *PinTuan) Open() {
+	//pArr := p.getDistPidArr()
+	//for _, d := range pArr {
+	//	p.zj(d.Id)
+	//}
 }
 
-func (p *PinTuan) Kj()  {
-	rand.Seed(time.Now().UnixNano())
-	min := 0
-	max := 3
-	win := rand.Intn(max - min + 1) + min
-
-	pArr := p.getDistPidArr()
-	for _, d := range pArr {
-		p.kj(d.Id, win)
-	}
-}
+//func (p *PinTuan) Kj()  {
+//	rand.Seed(time.Now().UnixNano())
+//	min := 0
+//	max := 3
+//	win := rand.Intn(max - min + 1) + min
+//
+//	pArr := p.getDistPidArr()
+//	for _, d := range pArr {
+//		p.kj(d.Id, win)
+//	}
+//}
 
 func (p *PinTuan) TimeTicker() {
 	go p.pdTicker()
-	go p.zjTicker()
+	go p.insertTicker()
 	go p.changePositionTicker()
 }
 
 func (p *PinTuan) Run() {
 	for {
 		select {
-		case <-p.pdC:
-			log.Println("pd")
-			p.Start()
-		case <-p.zjC:
-			log.Println("zj")
-			p.Zj()
+		case <-p.runC:
+			p.Open()
+		case <-p.insertC:
+			p.Insert()
 		}
 	}
 }
@@ -113,8 +101,8 @@ func New(cfg *Cfg, db *gorm.DB) *PinTuan {
 		cfg: cfg,
 		db: db,
 		lastPosition: 1,
-		pdC: make(chan struct{}, 100),
-		zjC: make(chan struct{}, 100),
-		changeNextC: make(chan struct{}, 100),
+		runC: make(chan struct{}),
+		insertC: make(chan struct{}),
+		changeNextC: make(chan struct{}),
 	}
 }

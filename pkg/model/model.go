@@ -32,55 +32,48 @@ func (w *New) TableName() string {
 	return "xinxi2_pin_tuan"
 }
 
-type WaitStatus int
+type PoolStatus int
 
 const (
-	WaitStatusNew WaitStatus = iota + 1
-	WaitStatusLost
-	WaitStatusMiss
-	WaitStatusMissIn
-	WaitStatusMissFinish
+	PoolNormal PoolStatus = iota + 1
+	PoolFinish
 )
 
-type Wait struct {
+type Pool struct {
 	Id int `gorm:"id"`
-	Index int `gorm:"index"`
-	Round int `gorm:"round"`
-	Group int `gorm:"group"`
-	Position int `gorm:"position"`
-	Status WaitStatus `gorm:"status"`
+	Status PoolStatus `gorm:"status"`
 	OrderId int `gorm:"order_id"`
 	DestProductId int `gorm:"dest_product_id"`
 	CreatedAt time.Time `gorm:"created_at"`
 	UpdatedAt time.Time `gorm:"updated_at"`
 }
 
-func (p *Wait) TableName() string {
-	return "xinxi2_pin_tuan_history"
+func (p *Pool) TableName() string {
+	return "xinxi2_pin_tuan_pool"
 }
 
-type ZjStatus int
+type WinStatus int
 
 const (
-	ZjStatusWait ZjStatus = iota
-	ZjStatusWin
-	ZjStatusLost
-	ZjStatusLostFinish
+	WinStatusWin WinStatus = iota + 1
+	WinStatusLost
+	WinStatusLostFinish
+	WinStatusMiss
 )
 
-type Zj struct {
+type Win struct {
 	Id int `gorm:"id"`
 	Index int `gorm:"index"`
 	Round int `gorm:"round"`
 	Group int `gorm:"group"`
 	Position int `gorm:"position"`
-	Status ZjStatus `gorm:"status"`
+	Status WinStatus `gorm:"status"`
 	OrderId int `gorm:"order_id"`
 	DestProductId int `gorm:"dest_product_id"`
 	CreatedAt time.Time `gorm:"created_at"`
 	UpdatedAt time.Time `gorm:"updated_at"`
 }
 
-func (z *Zj) TableName() string {
-	return "xinxi2_pin_tuan_history2"
+func (z *Win) TableName() string {
+	return "xinxi2_pin_tuan_win"
 }

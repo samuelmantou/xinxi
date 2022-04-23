@@ -4,18 +4,18 @@ import "time"
 
 func (p *PinTuan) pdTicker() {
 	for {
-		time.Sleep(time.Second * time.Duration(p.cfg.Pd))
+		time.Sleep(time.Second * time.Duration(p.cfg.Round))
 		if p.InTimeRange() {
-			p.pdC<- struct{}{}
+			p.runC<- struct{}{}
 		}
 	}
 }
 
-func (p *PinTuan) zjTicker()  {
+func (p *PinTuan) insertTicker()  {
 	for {
-		time.Sleep(time.Second * time.Duration(p.cfg.Zj))
+		time.Sleep(time.Second * time.Duration(p.cfg.Old))
 		if p.InTimeRange() {
-			p.zjC<- struct{}{}
+			p.insertC<- struct{}{}
 		}
 	}
 }
@@ -31,6 +31,7 @@ func (p *PinTuan) changePositionTicker()  {
 			return
 		default:
 			time.Sleep(time.Second * time.Duration(p.cfg.Change))
+			p.lastPosition = p.getPosition(p.lastPosition + 1)
 		}
 	}
 }
