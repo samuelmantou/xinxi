@@ -10,12 +10,12 @@ import (
 )
 
 type Cfg struct {
-	Change int `json:"change"`
-	Round int `json:"round"`
-	Winner int `json:"winner"`
-	Insert int `json:"insert"`
-	Start string `json:"start"`
-	End string `json:"end"`
+	Change int `yaml:"change"`
+	Round int `yaml:"round"`
+	Winner int `yaml:"winner"`
+	Insert int `yaml:"insert"`
+	Start string `yaml:"start"`
+	End string `yaml:"end"`
 }
 
 type PinTuan struct {
