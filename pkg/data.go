@@ -9,7 +9,7 @@ import (
 
 func (p *PinTuan) getDistPidArr() []model.Product {
 	var pArr []model.Product
-	err := p.db.Debug().Where("type = 1").Find(&pArr).Error
+	err := p.db.Where("type = 1").Find(&pArr).Error
 	if err != nil {
 		log.Println(err)
 	}
@@ -17,14 +17,14 @@ func (p *PinTuan) getDistPidArr() []model.Product {
 }
 
 func (p *PinTuan) insertPool(po *model.Pool) {
-	if err := p.db.Debug().Create(po).Error; err != nil {
+	if err := p.db.Create(po).Error; err != nil {
 		log.Println(err)
 	}
 }
 
 func (p *PinTuan) insertNew(DestProductId int) {
 	var nArr []model.New
-	err := p.db.Debug().Where("status = ? AND dest_product_id = ?", model.NewStatusNormal, DestProductId).Find(&nArr).Error
+	err := p.db.Where("status = ? AND dest_product_id = ?", model.NewStatusNormal, DestProductId).Find(&nArr).Error
 	if err == gorm.ErrRecordNotFound || len(nArr) == 0 {
 		return
 	}
@@ -40,7 +40,7 @@ func (p *PinTuan) insertNew(DestProductId int) {
 			Uid: n.Uid,
 		}
 		p.insertPool(po)
-		if err := p.db.Debug().Model(&model.New{}).Where("id = ?", n.Id).Update("status", model.NewStatusFinish).Error; err != nil {
+		if err := p.db.Model(&model.New{}).Where("id = ?", n.Id).Update("status", model.NewStatusFinish).Error; err != nil {
 			log.Println(err)
 		}
 	}
@@ -48,7 +48,7 @@ func (p *PinTuan) insertNew(DestProductId int) {
 
 func (p *PinTuan) insertLost(DestProductId int) {
 	var w model.Win
-	err := p.db.Debug().Where("status = ? AND position = ? AND dest_product_id = ?", model.WinStatusLost, p.lastPosition, DestProductId).
+	err := p.db.Where("status = ? AND position = ? AND dest_product_id = ?", model.WinStatusLost, p.lastPosition, DestProductId).
 		Order("id asc").
 		Find(&w).Error
 	if err == gorm.ErrRecordNotFound || w.Id == 0{
@@ -61,7 +61,7 @@ func (p *PinTuan) insertLost(DestProductId int) {
 		Uid: w.Uid,
 	}
 	p.insertPool(po)
-	if err := p.db.Debug().Model(&model.Win{}).Where("id = ?", w.Id).Update("status", model.WinStatusLostFinish).Error; err != nil {
+	if err := p.db.Model(&model.Win{}).Where("id = ?", w.Id).Update("status", model.WinStatusLostFinish).Error; err != nil {
 		log.Println(err)
 	}
 }
@@ -69,14 +69,14 @@ func (p *PinTuan) insertLost(DestProductId int) {
 func (p *PinTuan) open(destProductId, win int, reward Reward) {
 	round := 0
 	var lastWin model.Win
-	err := p.db.Debug().Where("dest_product_id = ?", destProductId).Order("round desc").Find(&lastWin).Error
+	err := p.db.Where("dest_product_id = ?", destProductId).Order("round desc").Find(&lastWin).Error
 	if lastWin.Id > 0 {
 		round = lastWin.Round
 	}
 	round++
 
 	var poolArr []model.Pool
-	err = p.db.Debug().Where(
+	err = p.db.Where(
 		"dest_product_id = ? AND status = ?",
 		destProductId,
 		model.PoolNormal,
@@ -110,11 +110,11 @@ func (p *PinTuan) open(destProductId, win int, reward Reward) {
 				w.Status = model.WinStatusLost
 			}
 
-			p.db.Debug().Create(&w)
+			p.db.Create(&w)
 			if w.Id > 0 {
 				winIds = append(winIds, strconv.Itoa(w.Id))
 			}
-			p.db.Debug().Model(&model.Pool{}).
+			p.db.Model(&model.Pool{}).
 				Where("id = ?", po.Id).
 				Updates(map[string]interface{}{
 					"status": model.PoolFinish,
@@ -141,7 +141,7 @@ func (p *PinTuan) open(destProductId, win int, reward Reward) {
 			Uid: po.Uid,
 		}
 		idx++
-		err := p.db.Debug().Create(&w)
+		err := p.db.Create(&w)
 		if err != nil {
 			log.Println(err)
 		}
@@ -151,7 +151,7 @@ func (p *PinTuan) open(destProductId, win int, reward Reward) {
 		Round: round,
 		DestProductId: destProductId,
 	}
-	if err := p.db.Debug().Create(&l).Error; err != nil {
+	if err := p.db.Create(&l).Error; err != nil {
 		log.Println(err)
 	}
 }
