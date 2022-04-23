@@ -1,5 +1,6 @@
 dsn: root:@tcp(127.0.0.1:3306)/xinxi?charset=utf8mb4&parseTime=True&loc=Local
 pin_tuan:
+  url: http://admin.xinxi.tech/
   change: 1
   round: 30
   insert: 2

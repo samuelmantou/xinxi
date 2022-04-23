@@ -65,10 +65,10 @@ func (p *PinTuan) insertLost(DestProductId int) {
 	}
 }
 
-func (p *PinTuan) open(DestProductId, win int) {
+func (p *PinTuan) open(destProductId, win int) {
 	round := 0
 	var lastWin model.Win
-	err := p.db.Debug().Where("dest_product_id = ?", DestProductId).Order("round desc").Find(&lastWin).Error
+	err := p.db.Debug().Where("dest_product_id = ?", destProductId).Order("round desc").Find(&lastWin).Error
 	if lastWin.Id > 0 {
 		round = lastWin.Round
 	}
@@ -77,7 +77,7 @@ func (p *PinTuan) open(DestProductId, win int) {
 	var poolArr []model.Pool
 	err = p.db.Debug().Where(
 		"dest_product_id = ? AND status = ?",
-		DestProductId,
+		destProductId,
 		model.PoolNormal,
 	).Order("id asc").Find(&poolArr).Error
 	if err == gorm.ErrRecordNotFound || len(poolArr) == 0 {
@@ -92,24 +92,31 @@ func (p *PinTuan) open(DestProductId, win int) {
 		k := 1
 		for j = i * 4; j < i * 4 + 4; j++ {
 			po := poolArr[j]
-			z := &model.Win{
+			w := &model.Win{
 				Round: round,
 				Group: i + 1,
 				Position: k,
 				OrderId: po.OrderId,
-				DestProductId: DestProductId,
+				DestProductId: destProductId,
 				Index: idx,
 				Uid: po.Uid,
 			}
 
 			if k == win {
-				z.Status = model.WinStatusWin
+				w.Status = model.WinStatusWin
 			}else{
-				z.Status = model.WinStatusLost
+				w.Status = model.WinStatusLost
 			}
 
-			p.db.Debug().Create(&z)
-			p.db.Debug().Model(&model.Pool{}).Where("id = ?", po.Id).Update("status", model.PoolFinish)
+			p.db.Debug().Create(&w)
+			p.db.Debug().Model(&model.Pool{}).
+				Where("id = ?", po.Id).
+				Updates(map[string]interface{}{
+					"status": model.PoolFinish,
+					"round": w.Round,
+					"group": w.Group,
+					"position": w.Position,
+				})
 			idx++
 			k++
 		}
@@ -121,7 +128,7 @@ func (p *PinTuan) open(DestProductId, win int) {
 			Index: idx,
 			Round: round,
 			OrderId: po.OrderId,
-			DestProductId: DestProductId,
+			DestProductId: destProductId,
 			Status: model.WinStatusMiss,
 			Uid: po.Uid,
 		}
@@ -130,5 +137,13 @@ func (p *PinTuan) open(DestProductId, win int) {
 		if err != nil {
 			log.Println(err)
 		}
+	}
+
+	l := model.WinLog{
+		Round: round,
+		DestProductId: destProductId,
+	}
+	if err := p.db.Debug().Create(&l).Error; err != nil {
+		log.Println(err)
 	}
 }

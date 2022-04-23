@@ -42,6 +42,8 @@ const (
 
 type Pool struct {
 	Id int `gorm:"id"`
+	Round int `gorm:"round"`
+	Position int `gorm:"position"`
 	Status PoolStatus `gorm:"status"`
 	OrderId int `gorm:"order_id"`
 	DestProductId int `gorm:"dest_product_id"`
@@ -79,4 +81,16 @@ type Win struct {
 
 func (z *Win) TableName() string {
 	return "xinxi2_pin_tuan_win"
+}
+
+type WinLog struct {
+	Id int `gorm:"id"`
+	Round int `gorm:"round"`
+	DestProductId int `gorm:"dest_product_id"`
+	CreatedAt time.Time `gorm:"created_at"`
+	UpdatedAt time.Time `gorm:"updated_at"`
+}
+
+func (z *WinLog) TableName() string {
+	return "xinxi2_pin_tuan_zj"
 }
