@@ -12,7 +12,6 @@ import (
 type Cfg struct {
 	Change int `yaml:"change"`
 	Round int `yaml:"round"`
-	Winner int `yaml:"winner"`
 	Insert int `yaml:"insert"`
 	Start string `yaml:"start"`
 	End string `yaml:"end"`
