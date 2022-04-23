@@ -119,17 +119,22 @@ func (p *PinTuan) open(destProductId, win int, reward Reward) {
 
 			if k == win {
 				w.Status = model.WinStatusWin
-				if w.Id > 0 {
-					winIds = append(winIds, strconv.Itoa(w.Id))
-				}
 			}else{
 				w.Status = model.WinStatusLost
-				if w.IsRefund {
-					refundIds = append(refundIds, strconv.Itoa(w.Id))
-				}
 			}
 
 			p.db.Create(&w)
+			if w.Status == model.WinStatusWin {
+				if w.Id > 0 {
+					winIds = append(winIds, strconv.Itoa(w.Id))
+				}
+			}else {
+				if w.Id > 0 {
+					if w.IsRefund {
+						refundIds = append(refundIds, strconv.Itoa(w.Id))
+					}
+				}
+			}
 			p.db.Model(&model.Pool{}).
 				Where("id = ?", po.Id).
 				Updates(map[string]interface{}{
@@ -142,7 +147,7 @@ func (p *PinTuan) open(destProductId, win int, reward Reward) {
 			k++
 		}
 	}
-	if len(winIds) > 0 {
+	if len(winIds) > 0 || len(refundIds) > 0{
 		reward(winIds, refundIds)
 	}
 	
