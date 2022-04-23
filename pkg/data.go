@@ -55,7 +55,7 @@ func (p *PinTuan) insertNew(DestProductId int) {
 func (p *PinTuan) insertLost(DestProductId int) {
 	var w model.Win
 	err := p.db.Where(
-		"status = ? AND position = ? AND dest_product_id = ?",
+		"status = ? AND position = ? AND dest_product_id = ? AND is_refund = 0",
 		model.WinStatusLost, p.lastPosition, DestProductId).
 		Order("id asc").
 		Find(&w).Error
