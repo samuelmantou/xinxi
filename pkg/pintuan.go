@@ -31,8 +31,7 @@ type PinTuan struct {
 	runC chan struct{}
 	insertC chan struct{}
 	changeNextC chan struct{}
-	insertLock sync.Mutex
-	openLock sync.Mutex
+	lock sync.Mutex
 }
 
 func (p *PinTuan) InTimeRange() bool {
@@ -61,8 +60,8 @@ func (p *PinTuan) getPosition(i int) int {
 }
 
 func (p *PinTuan) Insert() {
-	p.insertLock.Lock()
-	defer p.insertLock.Unlock()
+	p.lock.Lock()
+	defer p.lock.Unlock()
 	pArr := p.getDistPidArr()
 	for _, i := range pArr {
 		p.insertNew(i.Id)
@@ -84,11 +83,11 @@ func (p *PinTuan) reward(winIds, refundIds []string) {
 }
 
 func (p *PinTuan) Open() {
-	p.openLock.Lock()
-	defer p.openLock.Unlock()
+	p.lock.Lock()
+	defer p.lock.Unlock()
 	rand.Seed(time.Now().UnixNano())
-	min := 0
-	max := 3
+	min := 1
+	max := 4
 	win := rand.Intn(max - min + 1) + min
 	pArr := p.getDistPidArr()
 	for _, d := range pArr {

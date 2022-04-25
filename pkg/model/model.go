@@ -97,3 +97,13 @@ type WinLog struct {
 func (z *WinLog) TableName() string {
 	return "xinxi2_pin_tuan_zj"
 }
+
+type Running struct {
+	Id int `gorm:"id"`
+	DestProductId int `gorm:"dest_product_id"`
+	IsOpen bool `gorm:"is_open"`
+}
+
+func (r *Running) TableName() string {
+	return "xinxi2_pin_tuan_running"
+}

@@ -135,6 +135,12 @@ func (p *PinTuan) open(destProductId, win int, reward Reward) {
 					}
 				}
 			}
+
+			if w.IsRefund || w.Status == model.WinStatusWin {
+				p.db.Model(&model.Running{}).Where("uid = ?", w.Uid).
+					Update("is_open", 1)
+			}
+
 			p.db.Model(&model.Pool{}).
 				Where("id = ?", po.Id).
 				Updates(map[string]interface{}{
