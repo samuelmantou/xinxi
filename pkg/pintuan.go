@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"log"
 	"math/rand"
@@ -24,6 +25,7 @@ type Reward func(winIds, refundIds []string)
 
 type PinTuan struct {
 	db *gorm.DB
+	rdb *redis.Client
 	cfg *Cfg
 	Gap time.Duration
 	LastStatus int
@@ -32,6 +34,25 @@ type PinTuan struct {
 	insertC chan struct{}
 	changeNextC chan struct{}
 	lock sync.Mutex
+}
+
+type configData struct {
+	Id string `gorm:"id"`
+	RootKey string `gorm:"root_key"`
+	Key string `gorm:"key"`
+	Value string `gorm:"value"`
+}
+
+func (p *PinTuan) getStart() string {
+	var c configData
+	if err := p.db.Where("`root_key` = 'xinxi'  AND `key` = 'xinxi2_hun_he_1' = 'xinxi2_pin_tuan_start'").Scan(&c).Error; err != nil {
+		log.Println(err)
+	}
+	return c.Value
+}
+
+func (p *PinTuan) getEnd() string {
+	return ""
 }
 
 func (p *PinTuan) InTimeRange() bool {
@@ -112,10 +133,11 @@ func (p *PinTuan) Run() {
 	}
 }
 
-func New(cfg *Cfg, db *gorm.DB) *PinTuan {
+func New(cfg *Cfg, db *gorm.DB, rdb *redis.Client) *PinTuan {
 	return &PinTuan{
 		cfg: cfg,
 		db: db,
+		rdb: rdb,
 		lastPosition: 1,
 		runC: make(chan struct{}),
 		insertC: make(chan struct{}),
