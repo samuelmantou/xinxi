@@ -13,6 +13,7 @@ import (
 
 type Config struct {
 	Dsn string `yaml:"dsn"`
+	Redis string `yaml:"redis"`
 	PinTuan *pkg.Cfg `yaml:"pin_tuan"`
 }
 

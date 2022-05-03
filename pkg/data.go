@@ -97,6 +97,14 @@ func (p *PinTuan) open(destProductId, win int, reward Reward) {
 		return
 	}
 	if len(poolArr) < 4 {
+		l := model.WinLog{
+			Round: round,
+			DestProductId: destProductId,
+			IsSuccess: false,
+		}
+		if err := p.db.Create(&l).Error; err != nil {
+			log.Println(err)
+		}
 		return
 	}
 	j := 0
@@ -177,6 +185,7 @@ func (p *PinTuan) open(destProductId, win int, reward Reward) {
 	l := model.WinLog{
 		Round: round,
 		DestProductId: destProductId,
+		IsSuccess: true,
 	}
 	if err := p.db.Create(&l).Error; err != nil {
 		log.Println(err)

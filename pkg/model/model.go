@@ -90,6 +90,7 @@ type WinLog struct {
 	Id int `gorm:"id"`
 	Round int `gorm:"round"`
 	DestProductId int `gorm:"dest_product_id"`
+	IsSuccess bool `gorm:"is_success"`
 	CreatedAt time.Time `gorm:"created_at"`
 	UpdatedAt time.Time `gorm:"updated_at"`
 }
