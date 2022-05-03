@@ -4,7 +4,7 @@ import "time"
 
 func (p *PinTuan) pdTicker() {
 	for {
-		time.Sleep(time.Second * time.Duration(p.cfg.Round))
+		time.Sleep(time.Second * time.Duration(p.getRound()))
 		if p.InTimeRange() {
 			p.runC<- struct{}{}
 		}
@@ -13,7 +13,7 @@ func (p *PinTuan) pdTicker() {
 
 func (p *PinTuan) insertTicker()  {
 	for {
-		time.Sleep(time.Second * time.Duration(p.cfg.Insert))
+		time.Sleep(time.Second * time.Duration(p.getInsert()))
 		if p.InTimeRange() {
 			p.insertC<- struct{}{}
 		}
@@ -30,7 +30,7 @@ func (p *PinTuan) changePositionTicker()  {
 			p.lastPosition = p.getPosition(p.lastPosition + 1)
 			return
 		default:
-			time.Sleep(time.Second * time.Duration(p.cfg.Change))
+			time.Sleep(time.Second * time.Duration(p.getChange()))
 			p.lastPosition = p.getPosition(p.lastPosition + 1)
 		}
 	}

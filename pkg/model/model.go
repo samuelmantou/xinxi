@@ -108,3 +108,14 @@ type Running struct {
 func (r *Running) TableName() string {
 	return "xinxi2_pin_tuan_running"
 }
+
+type ConfigData struct {
+	Id string `gorm:"id"`
+	RootKey string `gorm:"root_key"`
+	Key string `gorm:"key"`
+	Value string `gorm:"value"`
+}
+
+func (d *ConfigData) TableName() string {
+	return "config_data"
+}

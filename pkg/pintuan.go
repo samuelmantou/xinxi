@@ -8,16 +8,13 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"strconv"
 	"sync"
 	"time"
+	"xinxi/pkg/model"
 )
 
 type Cfg struct {
-	Change int `yaml:"change"`
-	Round int `yaml:"round"`
-	Insert int `yaml:"insert"`
-	Start string `yaml:"start"`
-	End string `yaml:"end"`
 	Url string `yaml:"url"`
 }
 
@@ -36,34 +33,47 @@ type PinTuan struct {
 	lock sync.Mutex
 }
 
-type configData struct {
-	Id string `gorm:"id"`
-	RootKey string `gorm:"root_key"`
-	Key string `gorm:"key"`
-	Value string `gorm:"value"`
-}
-
-func (p *PinTuan) getStart() string {
-	var c configData
-	if err := p.db.Where("`root_key` = 'xinxi'  AND `key` = 'xinxi2_hun_he_1' = 'xinxi2_pin_tuan_start'").Scan(&c).Error; err != nil {
+func (p *PinTuan) getConfigValue(key string) string {
+	var c model.ConfigData
+	if err := p.db.Where("`root_key` = 'xinxi'  AND `key` = ?", key).Find(&c).Error; err != nil {
 		log.Println(err)
 	}
 	return c.Value
 }
+func (p *PinTuan) getStart() string {
+	return p.getConfigValue("xinxi2_pin_tuan_start")
+}
 
 func (p *PinTuan) getEnd() string {
-	return ""
+	return p.getConfigValue("xinxi2_pin_tuan_end")
+}
+
+func (p *PinTuan) getRound() int {
+	m := p.getConfigValue("xinxi2_pin_tuan_pre")
+	mm, _ := strconv.Atoi(m)
+	return mm * 60
+}
+
+func (p *PinTuan) getInsert() int {
+	m := p.getConfigValue("xinxi2_pin_tuan_gap")
+	mm, _ := strconv.Atoi(m)
+	return mm * 60
+}
+
+func (p *PinTuan) getChange() int {
+	r := p.getRound()
+	return r / 3
 }
 
 func (p *PinTuan) InTimeRange() bool {
 	n := time.Now()
 	nDay := n.Format("2006-01-02")
 	layout := "2006-01-02 15:04"
-	sTime, err := time.ParseInLocation(layout, fmt.Sprintf("%s %s", nDay, p.cfg.Start), time.Local)
+	sTime, err := time.ParseInLocation(layout, fmt.Sprintf("%s %s", nDay, p.getStart()), time.Local)
 	if err != nil {
 		log.Println(err)
 	}
-	eTime, err := time.ParseInLocation(layout, fmt.Sprintf("%s %s", nDay, p.cfg.End), time.Local)
+	eTime, err := time.ParseInLocation(layout, fmt.Sprintf("%s %s", nDay, p.getEnd()), time.Local)
 	if err != nil {
 		log.Println(err)
 	}

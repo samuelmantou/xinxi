@@ -43,7 +43,7 @@ func main() {
 		Addr:     "localhost:6379",
 	})
 
-
+	c.PinTuan.Change = 60
 	p := pkg.New(c.PinTuan, db, rdb)
 	p.TimeTicker()
 	p.Run()
