@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
@@ -30,6 +31,7 @@ type PinTuan struct {
 	runC chan struct{}
 	insertC chan struct{}
 	changeNextC chan struct{}
+	running bool
 	lock sync.Mutex
 }
 
@@ -126,19 +128,43 @@ func (p *PinTuan) Open() {
 	}
 }
 
+func (p *PinTuan) timeTicker() context.CancelFunc {
+	ctx, cancel := context.WithCancel(context.Background())
+	go p.pdTicker(ctx)
+	go p.insertTicker(ctx)
+	go p.changePositionTicker(ctx)
+	return cancel
+}
+
 func (p *PinTuan) TimeTicker() {
-	go p.pdTicker()
-	go p.insertTicker()
-	go p.changePositionTicker()
+	var cancelFn context.CancelFunc
+	go func() {
+		for {
+			time.Sleep(time.Minute)
+			if p.InTimeRange() {
+				if p.running == false {
+					p.running = true
+					cancelFn = p.timeTicker()
+				}
+			}else{
+				if p.running == true {
+					p.running = false
+					cancelFn()
+				}
+			}
+		}
+	}()
 }
 
 func (p *PinTuan) Run() {
 	for {
 		select {
 		case <-p.runC:
-			p.Open()
+			log.Println("open")
+			//p.Open()
 		case <-p.insertC:
-			p.Insert()
+			log.Println("insert")
+			//p.Insert()
 		}
 	}
 }
