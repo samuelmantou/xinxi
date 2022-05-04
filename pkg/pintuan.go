@@ -3,7 +3,6 @@ package pkg
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"log"
 	"math/rand"
@@ -23,15 +22,15 @@ type Reward func(winIds, refundIds []string)
 
 type PinTuan struct {
 	db *gorm.DB
-	rdb *redis.Client
+	reload chan struct{}
 	cfg *Cfg
 	Gap time.Duration
 	LastStatus int
 	lastPosition int
-	runC chan struct{}
-	insertC chan struct{}
+	runC chan Notice
+	insertC chan Notice
 	changeNextC chan struct{}
-	running bool
+	cancelFn context.CancelFunc
 	lock sync.Mutex
 }
 
@@ -136,24 +135,13 @@ func (p *PinTuan) timeTicker() context.CancelFunc {
 	return cancel
 }
 
-func (p *PinTuan) TimeTicker() {
-	var cancelFn context.CancelFunc
-	go func() {
-		for {
-			time.Sleep(time.Minute)
-			if p.InTimeRange() {
-				if p.running == false {
-					p.running = true
-					cancelFn = p.timeTicker()
-				}
-			}else{
-				if p.running == true {
-					p.running = false
-					cancelFn()
-				}
-			}
-		}
-	}()
+func (p *PinTuan) Reload() {
+	if p.cancelFn != nil {
+		p.cancelFn()
+	}
+	var ctx context.Context
+	ctx, p.cancelFn = context.WithCancel(context.Background())
+	newTimeTicker(ctx, p.insertC, "8:00", "13:00", time.Minute)
 }
 
 func (p *PinTuan) Run() {
@@ -165,18 +153,21 @@ func (p *PinTuan) Run() {
 		case <-p.insertC:
 			log.Println("insert")
 			//p.Insert()
+		case <-p.reload:
+			log.Println("reload")
 		}
 	}
 }
 
-func New(cfg *Cfg, db *gorm.DB, rdb *redis.Client) *PinTuan {
-	return &PinTuan{
+func New(cfg *Cfg, db *gorm.DB) *PinTuan {
+	p := &PinTuan{
 		cfg: cfg,
 		db: db,
-		rdb: rdb,
+		reload: make(chan struct{}),
 		lastPosition: 1,
-		runC: make(chan struct{}),
-		insertC: make(chan struct{}),
+		runC: make(chan Notice),
+		insertC: make(chan Notice),
 		changeNextC: make(chan struct{}),
 	}
+	return p
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/go-redis/redis/v8"
 	"gopkg.in/yaml.v2"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -39,11 +38,11 @@ func main() {
 	sqlDb.SetMaxIdleConns(20)
 	sqlDb.SetMaxOpenConns(30)
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-	})
-
-	p := pkg.New(c.PinTuan, db, rdb)
-	p.TimeTicker()
+	p := pkg.New(c.PinTuan, db)
+	p.Reload()
+	go func() {
+		time.Sleep(time.Minute * 3)
+		p.Reload()
+	}()
 	p.Run()
 }
