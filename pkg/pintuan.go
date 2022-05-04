@@ -128,14 +128,6 @@ func (p *PinTuan) Open() {
 	}
 }
 
-//func (p *PinTuan) timeTicker() context.CancelFunc {
-//	ctx, cancel := context.WithCancel(context.Background())
-//	go p.pdTicker(ctx)
-//	go p.insertTicker(ctx)
-//	go p.changePositionTicker(ctx)
-//	return cancel
-//}
-
 func (p *PinTuan) Reload() {
 	if p.cancelInsertFn != nil {
 		p.cancelInsertFn()
@@ -147,7 +139,6 @@ func (p *PinTuan) Reload() {
 	if p.cancelOpenFn != nil {
 		p.cancelOpenFn()
 	}
-
 	ctx, p.cancelOpenFn = context.WithCancel(context.Background())
 	newTimeTicker(ctx, p.openC, p.getStart(), p.getEnd(), time.Duration(p.getRound()) * time.Minute)
 }
