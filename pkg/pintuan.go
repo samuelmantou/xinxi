@@ -27,10 +27,11 @@ type PinTuan struct {
 	Gap time.Duration
 	LastStatus int
 	lastPosition int
-	runC chan Notice
+	openC chan Notice
 	insertC chan Notice
 	changeNextC chan struct{}
-	cancelFn context.CancelFunc
+	cancelInsertFn context.CancelFunc
+	cancelOpenFn context.CancelFunc
 	lock sync.Mutex
 }
 
@@ -52,13 +53,13 @@ func (p *PinTuan) getEnd() string {
 func (p *PinTuan) getRound() int {
 	m := p.getConfigValue("xinxi2_pin_tuan_pre")
 	mm, _ := strconv.Atoi(m)
-	return mm * 60
+	return mm
 }
 
 func (p *PinTuan) getInsert() int {
 	m := p.getConfigValue("xinxi2_pin_tuan_gap")
 	mm, _ := strconv.Atoi(m)
-	return mm * 60
+	return mm
 }
 
 func (p *PinTuan) getChange() int {
@@ -127,32 +128,72 @@ func (p *PinTuan) Open() {
 	}
 }
 
-func (p *PinTuan) timeTicker() context.CancelFunc {
-	ctx, cancel := context.WithCancel(context.Background())
-	go p.pdTicker(ctx)
-	go p.insertTicker(ctx)
-	go p.changePositionTicker(ctx)
-	return cancel
-}
+//func (p *PinTuan) timeTicker() context.CancelFunc {
+//	ctx, cancel := context.WithCancel(context.Background())
+//	go p.pdTicker(ctx)
+//	go p.insertTicker(ctx)
+//	go p.changePositionTicker(ctx)
+//	return cancel
+//}
 
 func (p *PinTuan) Reload() {
-	if p.cancelFn != nil {
-		p.cancelFn()
+	if p.cancelInsertFn != nil {
+		p.cancelInsertFn()
 	}
 	var ctx context.Context
-	ctx, p.cancelFn = context.WithCancel(context.Background())
-	newTimeTicker(ctx, p.insertC, "8:00", "13:00", time.Minute)
+	ctx, p.cancelInsertFn = context.WithCancel(context.Background())
+	newTimeTicker(ctx, p.insertC, p.getStart(), p.getEnd(), 1 * time.Minute)
+
+	if p.cancelOpenFn != nil {
+		p.cancelOpenFn()
+	}
+
+	ctx, p.cancelOpenFn = context.WithCancel(context.Background())
+	newTimeTicker(ctx, p.openC, p.getStart(), p.getEnd(), time.Duration(p.getRound()) * time.Minute)
 }
 
 func (p *PinTuan) Run() {
+	start := p.getStart()
+	end := p.getEnd()
+	round := p.getRound()
+	insert := p.getInsert()
+	go func() {
+		for {
+			time.Sleep(time.Minute)
+			s := p.getStart()
+			if start != s {
+				start = s
+				p.Reload()
+				continue
+			}
+			e := p.getEnd()
+			if end != e {
+				end = e
+				p.Reload()
+				continue
+			}
+			r := p.getRound()
+			if round != r {
+				round = r
+				p.Reload()
+				continue
+			}
+			i := p.getInsert()
+			if insert != i {
+				insert = i
+				p.Reload()
+				continue
+			}
+		}
+	}()
 	for {
 		select {
-		case <-p.runC:
+		case <-p.openC:
 			log.Println("open")
-			//p.Open()
+			p.Open()
 		case <-p.insertC:
 			log.Println("insert")
-			//p.Insert()
+			p.Insert()
 		case <-p.reload:
 			log.Println("reload")
 		}
@@ -165,7 +206,7 @@ func New(cfg *Cfg, db *gorm.DB) *PinTuan {
 		db: db,
 		reload: make(chan struct{}),
 		lastPosition: 1,
-		runC: make(chan Notice),
+		openC: make(chan Notice),
 		insertC: make(chan Notice),
 		changeNextC: make(chan struct{}),
 	}

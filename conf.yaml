@@ -1,5 +1,4 @@
 dsn: root:@tcp(127.0.0.1:3306)/xinxi?charset=utf8mb4&parseTime=True&loc=Local
-redis: localhost:6379
 pin_tuan:
   url: http://api.xinxi.tech/notice/xinxipintuan
   change: 5

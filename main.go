@@ -12,7 +12,6 @@ import (
 
 type Config struct {
 	Dsn string `yaml:"dsn"`
-	Redis string `yaml:"redis"`
 	PinTuan *pkg.Cfg `yaml:"pin_tuan"`
 }
 
@@ -40,9 +39,5 @@ func main() {
 
 	p := pkg.New(c.PinTuan, db)
 	p.Reload()
-	go func() {
-		time.Sleep(time.Minute * 3)
-		p.Reload()
-	}()
 	p.Run()
 }
