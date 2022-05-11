@@ -144,7 +144,7 @@ func (p *PinTuan) Reload() {
 	}
 	var ctx context.Context
 	ctx, p.cancelInsertFn = context.WithCancel(context.Background())
-	newTimeTicker(ctx, p.insertC, p.getStart(), p.getEnd(), 1 * time.Minute)
+	newTimeTicker(ctx, p.insertC, p.getStart(), p.getEnd(), 10 * time.Second)
 
 	if p.cancelOpenFn != nil {
 		p.cancelOpenFn()

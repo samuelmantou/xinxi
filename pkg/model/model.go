@@ -45,6 +45,7 @@ type Pool struct {
 	Id int `gorm:"id"`
 	Round int `gorm:"round"`
 	Position int `gorm:"position"`
+	Group int `gorm:"group"`
 	Status PoolStatus `gorm:"status"`
 	OrderId int `gorm:"order_id"`
 	DestProductId int `gorm:"dest_product_id"`

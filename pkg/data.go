@@ -17,6 +17,24 @@ func (p *PinTuan) getDistPidArr() []model.Product {
 }
 
 func (p *PinTuan) insertPool(po *model.Pool) {
+	po.Position = 1
+	po.Group = 1
+	var lastPool model.Pool
+	err := p.db.Where("dest_product_id = ? AND status = ?", po.DestProductId, model.PoolNormal).
+		Order("id desc").Find(&lastPool).Error
+	if err != nil {
+		log.Println(err)
+	}
+	if lastPool.Id > 0 {
+		if lastPool.Position == 4 {
+			po.Group = lastPool.Group + 1
+			po.Position = 1
+		}else {
+			po.Group = lastPool.Group
+			po.Position = lastPool.Position + 1
+		}
+	}
+
 	if err := p.db.Create(po).Error; err != nil {
 		log.Println("insertPool" + err.Error())
 	}
@@ -54,7 +72,7 @@ func (p *PinTuan) insertNew(DestProductId int) {
 
 func (p *PinTuan) insertLost(DestProductId int) {
 	var w model.Win
-	err := p.db.Where(
+	err := p.db.Debug().Where(
 		"status = ? AND position = ? AND dest_product_id = ? AND is_refund = 0",
 		model.WinStatusLost, p.lastPosition, DestProductId).
 		Order("id asc").
@@ -111,13 +129,12 @@ func (p *PinTuan) open(destProductId, win int, reward Reward) {
 	idx := 1
 	var winIds, refundIds []string
 	for i := 0; i < len(poolArr) / 4; i++ {
-		k := 1
 		for j = i * 4; j < i * 4 + 4; j++ {
 			po := poolArr[j]
 			w := &model.Win{
 				Round: round,
-				Group: i + 1,
-				Position: k,
+				Group: po.Group,
+				Position: po.Position,
 				OrderId: po.OrderId,
 				DestProductId: destProductId,
 				IsRefund: po.IsRefund,
@@ -125,7 +142,7 @@ func (p *PinTuan) open(destProductId, win int, reward Reward) {
 				Uid: po.Uid,
 			}
 
-			if k == win {
+			if po.Position == win {
 				w.Status = model.WinStatusWin
 			}else{
 				w.Status = model.WinStatusLost
@@ -154,11 +171,8 @@ func (p *PinTuan) open(destProductId, win int, reward Reward) {
 				Updates(map[string]interface{}{
 					"status": model.PoolFinish,
 					"round": w.Round,
-					"group": w.Group,
-					"position": w.Position,
 				})
 			idx++
-			k++
 		}
 	}
 	if len(winIds) > 0 || len(refundIds) > 0{
