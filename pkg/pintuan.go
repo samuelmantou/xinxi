@@ -214,6 +214,7 @@ func New(cfg *Cfg, db *gorm.DB) *PinTuan {
 	go func() {
 		for {
 			time.Sleep(time.Minute * 2)
+			log.Println("change")
 			p.Change()
 		}
 	}()
