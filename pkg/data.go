@@ -54,7 +54,7 @@ func (p *PinTuan) insertNew(DestProductId int) {
 
 func (p *PinTuan) insertLost(DestProductId int) {
 	var w model.Win
-	err := p.db.Where(
+	err := p.db.Debug().Where(
 		"status = ? AND position = ? AND dest_product_id = ? AND is_refund = 0",
 		model.WinStatusLost, p.lastPosition, DestProductId).
 		Order("id asc").
@@ -164,7 +164,7 @@ func (p *PinTuan) open(destProductId, win int, reward Reward) {
 	if len(winIds) > 0 || len(refundIds) > 0{
 		reward(winIds, refundIds)
 	}
-	
+
 	for ; j < len(poolArr); j++ {
 		po := poolArr[j]
 		w := model.Win{

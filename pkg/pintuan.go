@@ -102,6 +102,16 @@ func (p *PinTuan) Insert() {
 	}
 }
 
+func (p *PinTuan) Change() {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	if p.lastPosition == 4 {
+		p.lastPosition = 1
+	}else{
+		p.lastPosition++
+	}
+}
+
 func (p *PinTuan) reward(winIds, refundIds []string) {
 	go func() {
 		data := url.Values{
@@ -201,5 +211,11 @@ func New(cfg *Cfg, db *gorm.DB) *PinTuan {
 		insertC: make(chan Notice),
 		changeNextC: make(chan struct{}),
 	}
+	go func() {
+		for {
+			time.Sleep(time.Minute * 2)
+			p.Change()
+		}
+	}()
 	return p
 }
